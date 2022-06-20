@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 
 	config "github.com/Questee29/taxi-app_orderService/configs"
@@ -21,7 +22,7 @@ func main() {
 
 	db, err := database.New()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln(errors.New(`failed to load database`))
 	}
 	repository := repository.New(db)
 	service := service.New(repository)
