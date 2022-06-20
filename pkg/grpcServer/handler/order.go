@@ -2,20 +2,26 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	model "github.com/Questee29/taxi-app_orderService/models/order"
 	pb "github.com/Questee29/taxi-app_orderService/proto/protob"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+)
+
+const (
+	DriverAdress = ":9081"
 )
 
 type OrderService interface {
-	OrderTaxi(ctx context.Context, user model.UserRequest) error
+	NewOrder(ctx context.Context, user model.UserRequest, driver model.DriverResponse) error
+	FindFreeDriver(ctx context.Context, user model.UserRequest) (model.DriverResponse, error)
 }
 
 type OrderHandler struct {
 	pb.UnimplementedOrderGrpcServer
-	service OrderService
+	service OrderService //GRPCOrderService
 }
 
 func NewOrderHandler(service OrderService) *OrderHandler {
@@ -25,28 +31,53 @@ func NewOrderHandler(service OrderService) *OrderHandler {
 }
 
 func (h *OrderHandler) OrderTaxi(ctx context.Context, req *pb.OrderRequest) (*pb.OrderResponse, error) {
-	u := model.UserRequest{
+	uReq := model.UserRequest{
 		ID:       req.Userid,
 		TaxiType: req.Type.String(),
 		From:     req.From,
 		To:       req.To,
 	}
-	fmt.Println(u.TaxiType)
-	if err := h.service.OrderTaxi(ctx, u); err != nil {
+	log.Println(uReq)
+	//dial to the driverService
+	conn, err := grpc.Dial(DriverAdress, grpc.WithTransportCredentials(insecure.NewCredentials())) //
+	if err != nil {
+
 		return nil, err
 	}
-	return toPBModel(u), nil
+	defer conn.Close()
+
+	c := pb.NewOrderGrpcClient(conn)
+	result, err := c.FindDriver(ctx, &pb.FindDriverRequest{Userid: uReq.ID, Type: req.GetType()})
+	if err != nil {
+		return nil, err
+	}
+	//create model
+	dResponse := model.DriverResponse{
+		Driverid: result.GetDriverid(),
+		TaxType:  result.GetType().String(),
+		From:     result.GetFrom(),
+		To:       result.GetTo(),
+	}
+	//create new order, if returned driver
+	if err := h.service.NewOrder(ctx, uReq, dResponse); err != nil {
+		log.Println("ERROR!")
+		return nil, err
+	}
+
+	//returns driver
+	return toDriverPBModel(dResponse), nil
 
 }
-func toPBModel(user model.UserRequest) *pb.OrderResponse {
-	value, ok := pb.CarType_value[user.TaxiType]
+
+func toDriverPBModel(driver model.DriverResponse) *pb.OrderResponse {
+	value, ok := pb.CarType_value[driver.TaxType]
 	if !ok {
 		log.Println("invalid car type")
 	}
 	return &pb.OrderResponse{
-		Driverid: user.ID,
+		Driverid: driver.Driverid,
 		Type:     *pb.CarType(value).Enum(),
-		From:     user.From,
-		To:       user.To,
+		From:     driver.From,
+		To:       driver.To,
 	}
 }

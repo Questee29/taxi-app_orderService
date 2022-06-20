@@ -15,10 +15,11 @@ func upOrders(tx *sql.Tx) error {
 		"id" SERIAL PRIMARY KEY,
 		"user_id" int,
 		"driver_id" int,
-		"from" text,
-		"to" text,
+		"start_point" text,
+		"end_point" text,
 		"taxi_type" text,
-		"date" date,
+		"order_date" date,
+		"status" text,
 		"user_rate" real,
 		"driver_rate" real);`
 	_, err := tx.Exec(query)

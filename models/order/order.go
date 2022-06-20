@@ -19,3 +19,11 @@ type UserRequest struct {
 	From     string `json:"from"`
 	To       string `json:"to"`
 }
+
+
+type DriverResponse struct {
+	Driverid int32  `json:"Driver_id"`
+	TaxType  string `json:"taxi_type"`
+	From     string `json:"from"`
+	To       string `json:"to"`
+}

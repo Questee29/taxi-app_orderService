@@ -1,10 +1,11 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
-	"time"
+	"log"
 
-	"github.com/Questee29/taxi-app_orderService/models/order"
+	model "github.com/Questee29/taxi-app_orderService/models/order"
 	_ "github.com/lib/pq"
 )
 
@@ -16,24 +17,20 @@ func New(db *sql.DB) *repository {
 	return &repository{db: db}
 }
 
-func (repository *repository) GetAll() (order.Order, error) {
-	return order.Order{}, nil
-}
-func (repository *repository) CreateOrderTest(order order.UserRequest) error {
-	query := `
-	INSERT into test
-	VALUES ($1,$2,$3,$4)`
-	if _, err := repository.db.Exec(query, order.ID, order.TaxiType, order.From, order.To); err != nil {
-		return err
-	}
-	return nil
+func (repository *repository) GetAll() (model.Order, error) {
+	return model.Order{}, nil
 }
 
-func (repository *repository) CreateOrder(order order.Order) error {
+func (repository *repository) FindFreeDriver(ctx context.Context, taxiType string) (model.DriverResponse, error) {
+	return model.DriverResponse{}, nil
+}
+func (repository *repository) CreateOrder(order model.Order) error {
+	var zeroRate float32 = 0
 	query := `
-	INSERT into orders(user_id,driver_id,from,to,taxi_typename,date,status) 
-	VALUES ($1,$2,$3,$4,$5,$6,"in progress")`
-	if _, err := repository.db.Exec(query, order.UserId, order.DriverId, order.From, order.To, order.TaxiType, time.Now()); err != nil {
+	INSERT into orders(user_id,driver_id,start_point,end_point,taxi_type,order_date,status,user_rate,driver_rate)
+	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`
+	if _, err := repository.db.Exec(query, order.UserId, order.DriverId, order.From, order.To, order.TaxiType, order.Date, order.Status, zeroRate, zeroRate); err != nil {
+		log.Println(err)
 		return err
 	}
 	return nil
