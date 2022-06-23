@@ -6,17 +6,15 @@ import (
 	"time"
 
 	model "github.com/Questee29/taxi-app_orderService/models/order"
-	pb "github.com/Questee29/taxi-app_orderService/proto/protob"
 )
 
 type Repository interface {
 	FindFreeDriver(ctx context.Context, taxiType string) (model.DriverResponse, error)
 	CreateOrder(order model.Order) error
-	GetAll() (model.Order, error)
+	//GetAll() (model.Order, error)
 }
 
 type service struct {
-	pb.UnimplementedOrderGrpcServer
 	repository Repository
 }
 

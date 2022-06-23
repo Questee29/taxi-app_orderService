@@ -18,122 +18,272 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// OrderGrpcClient is the client API for OrderGrpc service.
+// OrderGrpcServiceClient is the client API for OrderGrpcService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type OrderGrpcClient interface {
+type OrderGrpcServiceClient interface {
 	OrderTaxi(ctx context.Context, in *OrderRequest, opts ...grpc.CallOption) (*OrderResponse, error)
-	FindDriver(ctx context.Context, in *FindDriverRequest, opts ...grpc.CallOption) (*FindDriverResponse, error)
+	FindDriver(ctx context.Context, in *FindDriverRequest, opts ...grpc.CallOption) (OrderGrpcService_FindDriverClient, error)
+	GetAllOrders(ctx context.Context, in *GetOrdersRequest, opts ...grpc.CallOption) (*GetOrdersResponse, error)
 }
 
-type orderGrpcClient struct {
+type orderGrpcServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewOrderGrpcClient(cc grpc.ClientConnInterface) OrderGrpcClient {
-	return &orderGrpcClient{cc}
+func NewOrderGrpcServiceClient(cc grpc.ClientConnInterface) OrderGrpcServiceClient {
+	return &orderGrpcServiceClient{cc}
 }
 
-func (c *orderGrpcClient) OrderTaxi(ctx context.Context, in *OrderRequest, opts ...grpc.CallOption) (*OrderResponse, error) {
+func (c *orderGrpcServiceClient) OrderTaxi(ctx context.Context, in *OrderRequest, opts ...grpc.CallOption) (*OrderResponse, error) {
 	out := new(OrderResponse)
-	err := c.cc.Invoke(ctx, "/protob.OrderGrpc/OrderTaxi", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/protob.OrderGrpcService/OrderTaxi", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *orderGrpcClient) FindDriver(ctx context.Context, in *FindDriverRequest, opts ...grpc.CallOption) (*FindDriverResponse, error) {
-	out := new(FindDriverResponse)
-	err := c.cc.Invoke(ctx, "/protob.OrderGrpc/FindDriver", in, out, opts...)
+func (c *orderGrpcServiceClient) FindDriver(ctx context.Context, in *FindDriverRequest, opts ...grpc.CallOption) (OrderGrpcService_FindDriverClient, error) {
+	stream, err := c.cc.NewStream(ctx, &OrderGrpcService_ServiceDesc.Streams[0], "/protob.OrderGrpcService/FindDriver", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &orderGrpcServiceFindDriverClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type OrderGrpcService_FindDriverClient interface {
+	Recv() (*FindDriverResponse, error)
+	grpc.ClientStream
+}
+
+type orderGrpcServiceFindDriverClient struct {
+	grpc.ClientStream
+}
+
+func (x *orderGrpcServiceFindDriverClient) Recv() (*FindDriverResponse, error) {
+	m := new(FindDriverResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *orderGrpcServiceClient) GetAllOrders(ctx context.Context, in *GetOrdersRequest, opts ...grpc.CallOption) (*GetOrdersResponse, error) {
+	out := new(GetOrdersResponse)
+	err := c.cc.Invoke(ctx, "/protob.OrderGrpcService/GetAllOrders", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// OrderGrpcServer is the server API for OrderGrpc service.
-// All implementations must embed UnimplementedOrderGrpcServer
+// OrderGrpcServiceServer is the server API for OrderGrpcService service.
+// All implementations must embed UnimplementedOrderGrpcServiceServer
 // for forward compatibility
-type OrderGrpcServer interface {
+type OrderGrpcServiceServer interface {
 	OrderTaxi(context.Context, *OrderRequest) (*OrderResponse, error)
-	FindDriver(context.Context, *FindDriverRequest) (*FindDriverResponse, error)
-	mustEmbedUnimplementedOrderGrpcServer()
+	FindDriver(*FindDriverRequest, OrderGrpcService_FindDriverServer) error
+	GetAllOrders(context.Context, *GetOrdersRequest) (*GetOrdersResponse, error)
+	mustEmbedUnimplementedOrderGrpcServiceServer()
 }
 
-// UnimplementedOrderGrpcServer must be embedded to have forward compatible implementations.
-type UnimplementedOrderGrpcServer struct {
+// UnimplementedOrderGrpcServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedOrderGrpcServiceServer struct {
 }
 
-func (UnimplementedOrderGrpcServer) OrderTaxi(context.Context, *OrderRequest) (*OrderResponse, error) {
+func (UnimplementedOrderGrpcServiceServer) OrderTaxi(context.Context, *OrderRequest) (*OrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OrderTaxi not implemented")
 }
-func (UnimplementedOrderGrpcServer) FindDriver(context.Context, *FindDriverRequest) (*FindDriverResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FindDriver not implemented")
+func (UnimplementedOrderGrpcServiceServer) FindDriver(*FindDriverRequest, OrderGrpcService_FindDriverServer) error {
+	return status.Errorf(codes.Unimplemented, "method FindDriver not implemented")
 }
-func (UnimplementedOrderGrpcServer) mustEmbedUnimplementedOrderGrpcServer() {}
+func (UnimplementedOrderGrpcServiceServer) GetAllOrders(context.Context, *GetOrdersRequest) (*GetOrdersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllOrders not implemented")
+}
+func (UnimplementedOrderGrpcServiceServer) mustEmbedUnimplementedOrderGrpcServiceServer() {}
 
-// UnsafeOrderGrpcServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to OrderGrpcServer will
+// UnsafeOrderGrpcServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to OrderGrpcServiceServer will
 // result in compilation errors.
-type UnsafeOrderGrpcServer interface {
-	mustEmbedUnimplementedOrderGrpcServer()
+type UnsafeOrderGrpcServiceServer interface {
+	mustEmbedUnimplementedOrderGrpcServiceServer()
 }
 
-func RegisterOrderGrpcServer(s grpc.ServiceRegistrar, srv OrderGrpcServer) {
-	s.RegisterService(&OrderGrpc_ServiceDesc, srv)
+func RegisterOrderGrpcServiceServer(s grpc.ServiceRegistrar, srv OrderGrpcServiceServer) {
+	s.RegisterService(&OrderGrpcService_ServiceDesc, srv)
 }
 
-func _OrderGrpc_OrderTaxi_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OrderGrpcService_OrderTaxi_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(OrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrderGrpcServer).OrderTaxi(ctx, in)
+		return srv.(OrderGrpcServiceServer).OrderTaxi(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/protob.OrderGrpc/OrderTaxi",
+		FullMethod: "/protob.OrderGrpcService/OrderTaxi",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrderGrpcServer).OrderTaxi(ctx, req.(*OrderRequest))
+		return srv.(OrderGrpcServiceServer).OrderTaxi(ctx, req.(*OrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrderGrpc_FindDriver_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FindDriverRequest)
+func _OrderGrpcService_FindDriver_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(FindDriverRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(OrderGrpcServiceServer).FindDriver(m, &orderGrpcServiceFindDriverServer{stream})
+}
+
+type OrderGrpcService_FindDriverServer interface {
+	Send(*FindDriverResponse) error
+	grpc.ServerStream
+}
+
+type orderGrpcServiceFindDriverServer struct {
+	grpc.ServerStream
+}
+
+func (x *orderGrpcServiceFindDriverServer) Send(m *FindDriverResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _OrderGrpcService_GetAllOrders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrdersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrderGrpcServer).FindDriver(ctx, in)
+		return srv.(OrderGrpcServiceServer).GetAllOrders(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/protob.OrderGrpc/FindDriver",
+		FullMethod: "/protob.OrderGrpcService/GetAllOrders",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrderGrpcServer).FindDriver(ctx, req.(*FindDriverRequest))
+		return srv.(OrderGrpcServiceServer).GetAllOrders(ctx, req.(*GetOrdersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// OrderGrpc_ServiceDesc is the grpc.ServiceDesc for OrderGrpc service.
+// OrderGrpcService_ServiceDesc is the grpc.ServiceDesc for OrderGrpcService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var OrderGrpc_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "protob.OrderGrpc",
-	HandlerType: (*OrderGrpcServer)(nil),
+var OrderGrpcService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "protob.OrderGrpcService",
+	HandlerType: (*OrderGrpcServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "OrderTaxi",
-			Handler:    _OrderGrpc_OrderTaxi_Handler,
+			Handler:    _OrderGrpcService_OrderTaxi_Handler,
 		},
 		{
-			MethodName: "FindDriver",
-			Handler:    _OrderGrpc_FindDriver_Handler,
+			MethodName: "GetAllOrders",
+			Handler:    _OrderGrpcService_GetAllOrders_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "FindDriver",
+			Handler:       _OrderGrpcService_FindDriver_Handler,
+			ServerStreams: true,
+		},
+	},
+	Metadata: "proto/order.proto",
+}
+
+// RatingGrpcServiceClient is the client API for RatingGrpcService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type RatingGrpcServiceClient interface {
+	RateLastOrder(ctx context.Context, in *RateOrderRequest, opts ...grpc.CallOption) (*RateOrderResponse, error)
+}
+
+type ratingGrpcServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewRatingGrpcServiceClient(cc grpc.ClientConnInterface) RatingGrpcServiceClient {
+	return &ratingGrpcServiceClient{cc}
+}
+
+func (c *ratingGrpcServiceClient) RateLastOrder(ctx context.Context, in *RateOrderRequest, opts ...grpc.CallOption) (*RateOrderResponse, error) {
+	out := new(RateOrderResponse)
+	err := c.cc.Invoke(ctx, "/protob.RatingGrpcService/RateLastOrder", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RatingGrpcServiceServer is the server API for RatingGrpcService service.
+// All implementations must embed UnimplementedRatingGrpcServiceServer
+// for forward compatibility
+type RatingGrpcServiceServer interface {
+	RateLastOrder(context.Context, *RateOrderRequest) (*RateOrderResponse, error)
+	mustEmbedUnimplementedRatingGrpcServiceServer()
+}
+
+// UnimplementedRatingGrpcServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedRatingGrpcServiceServer struct {
+}
+
+func (UnimplementedRatingGrpcServiceServer) RateLastOrder(context.Context, *RateOrderRequest) (*RateOrderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RateLastOrder not implemented")
+}
+func (UnimplementedRatingGrpcServiceServer) mustEmbedUnimplementedRatingGrpcServiceServer() {}
+
+// UnsafeRatingGrpcServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to RatingGrpcServiceServer will
+// result in compilation errors.
+type UnsafeRatingGrpcServiceServer interface {
+	mustEmbedUnimplementedRatingGrpcServiceServer()
+}
+
+func RegisterRatingGrpcServiceServer(s grpc.ServiceRegistrar, srv RatingGrpcServiceServer) {
+	s.RegisterService(&RatingGrpcService_ServiceDesc, srv)
+}
+
+func _RatingGrpcService_RateLastOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RateOrderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RatingGrpcServiceServer).RateLastOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/protob.RatingGrpcService/RateLastOrder",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RatingGrpcServiceServer).RateLastOrder(ctx, req.(*RateOrderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// RatingGrpcService_ServiceDesc is the grpc.ServiceDesc for RatingGrpcService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var RatingGrpcService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "protob.RatingGrpcService",
+	HandlerType: (*RatingGrpcServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "RateLastOrder",
+			Handler:    _RatingGrpcService_RateLastOrder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

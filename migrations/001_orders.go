@@ -15,6 +15,7 @@ func upOrders(tx *sql.Tx) error {
 		"id" SERIAL PRIMARY KEY,
 		"user_id" int,
 		"driver_id" int,
+		"driver_name" text,
 		"start_point" text,
 		"end_point" text,
 		"taxi_type" text,

@@ -2,41 +2,71 @@ syntax = "proto3";
 option go_package ="/protob";
 package protob;
 
-service OrderGrpc{
+service OrderGrpcService{
     rpc OrderTaxi(orderRequest) returns (orderResponse){}
-    rpc FindDriver(findDriverRequest)returns(findDriverResponse){}
+    rpc FindDriver(findDriverRequest)returns (stream findDriverResponse){}
+    rpc GetAllOrders(getOrdersRequest) returns(getOrdersResponse) {}
   }
-  
+service RatingGrpcService{
+    rpc RateLastOrder(RateOrderRequest) returns (RateOrderResponse){}
+
+}
+  //OrderTaxi
   enum CarType{
     economy = 0;
     comfort = 1;
     business =2;
-  }
+ }
 
   message orderRequest{
     int32 userid = 1;
     CarType type =2;
     string from =3 ;
     string to = 4;
+    
   }
   
   message orderResponse{
     int32 driverid = 1;
-    CarType type =2;
-    string from =3 ;
-    string to = 4;
+    string driverName=2;
+    CarType type =3;
+    string from =4 ;
+    string to = 5;
   }
 
+  //FindDriver
   message findDriverRequest{
     int32 userid = 1;
-    CarType type =2;
   }
 
+  message DriverInfo{
+    int32 driverID=1;
+    CarType type =2;
+
+  }
   message findDriverResponse{
-    int32 driverid = 1;
-    CarType type =2;
-    string from =3 ;
-    string to = 4;
+    repeated DriverInfo driver =1;
+  
   }
 
-  
+  //GetAllOrders
+  message getOrdersRequest{
+    int32 userid = 1;
+  }
+
+  message getOrdersResponse{
+    CarType type = 1;
+    string driverName = 2;
+    string from = 3;
+    string to = 4;
+   
+  }
+
+  //RateLastOrder
+  message RateOrderRequest{
+    int32 userid = 1;
+  }
+
+  message RateOrderResponse{
+   string resultMessage =1;
+  }

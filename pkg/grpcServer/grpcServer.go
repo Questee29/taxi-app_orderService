@@ -8,7 +8,8 @@ import (
 )
 
 type Deps struct {
-	OrderHandler pb.OrderGrpcServer
+	OrderHandler pb.OrderGrpcServiceServer
+	//	RatingHandler pb.RatingGrpcServiceServer
 }
 type Server struct {
 	deps Deps
@@ -28,7 +29,7 @@ func (s *Server) ListenAndServe(port string) error {
 	if err != nil {
 		return err
 	}
-	pb.RegisterOrderGrpcServer(s.srv, s.deps.OrderHandler)
+	pb.RegisterOrderGrpcServiceServer(s.srv, s.deps.OrderHandler)
 	if err := s.srv.Serve(lis); err != nil {
 		return err
 	}
